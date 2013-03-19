@@ -74,11 +74,15 @@ class Channel(object):
 	#Channel 私有变量
 	#用户关注： 否
 	
-	def __init__(self, accessKey, secretKey, arr_curlOpts = dict()):
+	def __init__(self, accessKey, secretKey, arr_curlOpts = None):
 		self._accessKey = accessKey
 		self._secretKey = secretKey
 		self._requestId = 0
-		self._curlOpts = dict(CURLOPT_TIMEOUT = 30, CURLOPT_CONNECTTIMEOUT = 5)
+		if arr_curlOpts is None:
+			self._curlOpts = dict(CURLOPT_TIMEOUT = 30, CURLOPT_CONNECTTIMEOUT = 5)
+		else:
+			self._curlOpts = arr_curlOpts
+
 		self._arrayErrorMap = {'0' : 'python sdk error',\
 									Channel.CHANNEL_SDK_SYS : 'php sdk error',\
 									Channel.CHANNEL_SDK_INIT_FAIL : 'php sdk init error', \
