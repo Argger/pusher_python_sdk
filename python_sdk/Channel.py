@@ -4,6 +4,8 @@ import time
 import urllib
 import md5
 import json
+import ChannelException
+from RequestCore import *
 
 #
 #
@@ -39,16 +41,17 @@ class Channel(object):
 	
 	APPID = 'appid'
 	ACCESS_TOKEN = 'access_token'
-	ACCESS_KEY = 'access_key'
+	API_KEY = 'apikey'
 	SECRET_KEY = 'secret_key'
 	SIGN = 'sign'
 	METHOD = 'method'
 	HOST = 'host'
 	USER_ID = 'user_id'
 	MESSAGES = 'messages'
-	PROCUCT = 'channel'
+	PRODUCT = 'channel'
 	
-	DEFAULT_HOST = 'localhost:1234' #'channel.api.duapp.com'
+	DEFAULT_HOST = '10.23.248.79:8050' #'channel.api.duapp.com'
+#	DEFAULT_HOST = 'localhost:1234' #'channel.api.duapp.com'
 	NAME = 'name'
 	DESCRIPTION = 'description'
 	CERT = 'cert'
@@ -74,8 +77,8 @@ class Channel(object):
 	#Channel 私有变量
 	#用户关注： 否
 	
-	def __init__(self, accessKey, secretKey, arr_curlOpts = None):
-		self._accessKey = accessKey
+	def __init__(self, apiKey, secretKey, arr_curlOpts = None):
+		self._apiKey = apiKey
 		self._secretKey = secretKey
 		self._requestId = 0
 		if arr_curlOpts is None:
@@ -90,14 +93,27 @@ class Channel(object):
 									Channel.CHANNEL_SDK_HTTP_STATUS_ERROR_AND_RESULT_ERROR : 'http status is error, and the body returned is not a json string', \
 									Channel.CHANNEL_SDK_HTTP_STATUS_OK_BUT_RESULT_ERROR : 'http status is ok, but the body returned is not a json string'}
 		
-		if(not isinstance(arr_curlOpts, dict)):
+		if(not isinstance(self._curlOpts, dict)):
 			raise ChannelExcepthion, ('invalid param -arr_curlopt is not an dict', Channel.CHANNEL_SDK_INIT_FAIL) 
-		
-		self._curlOpts.update(arr_curlOpts)
 
 		self._resetErrorStatus()
 
-#################################################3
+#################################################
+
+	def queryBindList(self, userId, optional = None):
+		self._resetErrorStatus()
+		tmpArgs = [userId, optional]
+		arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)	
+		arrArgs[Channel.METHOD] = 'query_bindlist'
+		return self._commonProcess(arrArgs)
+		
+			
+
+
+
+
+
+##################################################
 
 	def _resetErrorStatus(self):
 		pass
@@ -118,7 +134,7 @@ class Channel(object):
 			opt[Channel.TIMESTAMP] = int(time.time())
 
 		opt[Channel.HOST] = Channel.DEFAULT_HOST 
-		opt[Channel.ACCESS_KEY] = self._accessKey
+		opt[Channel.API_KEY] = self._apiKey
 
 		if(opt.has_key(Channel.SECRET_KEY)):
 			del opt[Channel.SECRET_KEY]
@@ -133,7 +149,7 @@ class Channel(object):
 		for key in keys:
 			gather += key + '=' + str(arrContent[key])
 		gather += self._secretKey
-		sign = md5.new(urllib.quote(gather))
+		sign = md5.new(urllib.quote(gather, ''))  #替换'/'
 		return sign.hexdigest()
 
 
@@ -148,22 +164,15 @@ class Channel(object):
 		host = opt[Channel.HOST]
 		del opt[Channel.HOST]
 		
-		content = ''
-		for (key, value) in opt.items():
-			key = urllib.quote(key)
-			value = urllib.quote(url)
-			content += key + '=' + value
-		content = content[0:len(string)-1]
-			 
 		url = 'http://' + host + '/rest/2.0/' + Channel.PRODUCT + '/'
 		url += resource
 		http_method = 'POST'
 		opt[Channel.SIGN] = self._genSign(http_method, url, opt)
-
+		
 		request = RequestCore(url)
 		headers = dict()
 		headers['Content-Type'] = 'application/x-www-form-urlencoded'
-		headers['User-Agent'] = 'Baidu Channel Service Phpsdk Client'
+		headers['User-Agent'] = 'Baidu Channel Service Pythonsdk Client'
 
 		for (headerKey , headerValue) in headers.items():
 			headerValue = headerValue.replace('\r', '')
@@ -172,12 +181,12 @@ class Channel(object):
 				request.add_header(headerKey, headerValue)
 		
 		request.set_method(http_method)
-		request.set_body(content)
+		request.set_body(urllib.urlencode(opt))
 		
 		if(isinstance(self._curlOpts, dict)):
-			request.set_curlOpts(self._curlOpts)
+			request.set_curlopts(self._curlOpts)
 
-		request.send_request()
+		request.handle_request()
 		return ResponseCore(request.get_response_header(),\
 							request.get_response_body(),\
 							request.get_response_code())
@@ -221,8 +230,8 @@ class Channel(object):
 			keys += ')'
 	
 			raise ChannelException, ('invalid sdk, params, params' + keys + 'are need', Channel.CHANNEL_SDK_PARAM)
-
-		if(len(tmpArgs)-1 == len(arrNeed) and (not isinstance(tmpArgs[-1], dict)) ):
+		if(len(tmpArgs)-1 == len(arrNeed) and tmpArgs[-1] is not None \
+			and (not isinstance(tmpArgs[-1], dict)) ):
 			raise ChannelException, ('invalid sdk params, optional param must bean array', Channel.CHANNEL_SDK_PARAM)
 
 		idx = 0
@@ -232,7 +241,7 @@ class Channel(object):
 			arrArgs[key] = tmpArgs[idx]	
 			idx = idx + 1
 
-		if(len(tmpArgs)  == idx + 1):
+		if(len(tmpArgs)  == idx + 1 and tmpArgs[idx] is not None):
 			for (key, value) in tmpArgs[idx].items():
 				if(not arrArgs.has_key(key) and value is not  None):
 					arrArgs[key] = value

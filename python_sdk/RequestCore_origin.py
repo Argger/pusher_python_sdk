@@ -22,7 +22,7 @@ class RequestCore(object):
 	def __init__(self, url = None, proxy = None, helpers = None):
 		
 		self.request_url = url
-		self.method = RequestCore.HTTP_POST
+		self.method = RequestCore.HTTP_GET
 		self.request_headers = dict()
 		self.request_body = None
 
@@ -43,6 +43,16 @@ class RequestCore(object):
 		self.response_class = 'ResponseCore'
 		self.useragent = 'RequestCore/1.4.2'
 		
+		self.read_file = None
+		self.read_stream = None
+		self.read_stream_size = None
+		self.read_stream_read = 0
+		
+		self.write_file = None
+		self.write_stream = None
+		self.seek_position = None
+		self.registered_streaming_read_callback = None
+		self.registered_streaming_write_callback = None
 		
 		if(isinstance(helpers, dict)):
 			if(helpers.has_key() and helpers['request'] is not None):
@@ -53,6 +63,12 @@ class RequestCore(object):
 		if(proxy is not None):
 			self.set_proxy(proxy)
 
+
+	def __del__(self):
+		if(self.read_file is not None and self.read_stream is not None):
+			self.read_stream.close()
+		if(self.write_file is not None and self.write_stream is not None):
+			self.write-stream.close()
 		
 	def set_credentials(self, username, password):
 		self.username = username
@@ -80,10 +96,63 @@ class RequestCore(object):
 	def set_curlopts(self, curlopts):
 		self.curlopts = curlopts
 
+	def set_read_stream_size(self, size):
+		self.read_stream_size = size
+
+	def set_read_stream(self, resource, size = None):
+		pass
+
+	def set_read_file(self, location):
+		pass
+
+	def set_write_stream(self, resource):
+		pass
+
+	def set_write_file(self, location):
+		pass
+
 	def set_proxy(self, proxy):
 		self.proxy = urlparse.urlparse(proxy)
 
-	def handle_request(self):
+	def set_seek_position(self, position):
+		pass
+	
+	def register_streaming_read_callback(self, callback):
+		self.registered_streaming_read_callback = callback
+
+	def register_streaming_write_callback(self, callback):
+		self.registered_streaming_write_callback = callback
+
+	def streaming_read_callback(self, curl_handle, file_handle, length):
+		if (self.read_stream_read >= self.read_stream_size):
+			return None
+		if(self.read_stream_read == 0 and self.seek_position and \
+			self.seek_position != self.read_stream.tell()):
+			self.read_stram.seek(self.seek_postion)
+		if(self.seek_position != self.read_stream.tell()):
+			raise RequestCore_Exeption,('The stream does not support seeking and is either not at the requested position or the position is unknown.')
+		
+		read = self.read_stream.read(min(self.read_stream_size - self.read_stream_read, length))
+		self.read_stream_read += len(read)
+		out = read
+
+		if(self.registered_streaming_read_callback):
+			self.call_user_func(self.registered_streaming_read_callback, curl_handle, file_handle, out)
+
+		return out
+		
+		 	
+	def stream_write_callback(self, curl_handle, data):
+		length = len(data)
+		written_last = 0
+		self.write_stream.write(data)
+		self.write_stream.flush()
+		if(self.registered_streaming_write_callback):
+			call_user_func(self.registered_streaming_write_callback, curl_handle, length)
+		return length
+		
+
+	def send_request(self):
 		curl_handle = pycurl.Curl()
 		# set default options.
 		curl_handle.setopt(pycurl.URL, self.request_url)
@@ -101,22 +170,12 @@ class RequestCore(object):
 				tmplist.append(key + ':' + value)
 			curl_handle.setopt(pycurl.HTTPHEADER, tmplist)
 		#if(self.method == self.HTTP_PUT):
-		#目前只需支持POST
 		curl_handle.setopt(pycurl.HTTPPROXYTUNNEL, 1)
 		curl_handle.setopt(pycurl.POSTFIELDS, self.request_body)
-
-		response = StringIO.StringIO()
-		curl_handle.setopt(pycurl.WRITEFUNCTION, response.write)
+		curl_handle.fp = StringIO.StringIO()
+		curl_handle.setopt(pycurl.WRITEFUNCTION, curl_handle.fp.write)
 		curl_handle.perform()
-
-		self.response_code = curl_handle.getinfo(curl_handle.HTTP_CODE)
-		header_size = curl_handle.getinfo(curl_handle.HEADER_SIZE)
-		resp_str = response.getvalue()
-		self.response_headers = resp_str[0 : header_size]
-		self.response_body = resp_str[header_size : ]
-	
-		response.close()
-		curl_handle.close()
+		return curl_handle.fp.getvalue()
 
 	
 	def get_response_header(self, header = None):
@@ -124,10 +183,10 @@ class RequestCore(object):
 			return self.response_headers[header]
 		return self.response_headers
 
-	def get_response_body(self):
+	def get_response_body():
 		return self.response_body
 
-	def get_response_code(self):
+	def get_response_code():
 		return self.response_code
 
 
