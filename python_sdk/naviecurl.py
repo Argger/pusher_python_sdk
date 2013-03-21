@@ -8,7 +8,7 @@ import urllib
 url = "http://10.23.248.79:8050/rest/2.0/channel/channel"
 post_data_dic = {'method':'fetch_tag', 'apikey':'GkWwrvZrCaMQfCZ190ujndZm'}
 crl = pycurl.Curl()
-crl.setopt(pycurl.VERBOSE,1)
+#crl.setopt(pycurl.VERBOSE,1)
 crl.setopt(pycurl.FOLLOWLOCATION, 1)
 crl.setopt(pycurl.MAXREDIRS, 5)
 #crl.setopt(pycurl.AUTOREFERER,1)
@@ -34,12 +34,8 @@ crl.perform()
 
 
 code = crl.getinfo(pycurl.HTTP_CODE)
-#header = crl.getinfo(pycurl.HEADER)
-header_size = crl.getinfo(pycurl.HEADER_SIZE)
-#content_type = crl.getinfo(pycurl.CONTENT_TYPE) 
-print "head:>>",header.getvalue()
-print len(header.getvalue())
-print crl.fp.getvalue()
-print code
-print header_size
+
+crl.fp.close()
+header.close()
+crl.close()
 #print content_type
