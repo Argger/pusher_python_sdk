@@ -16,10 +16,10 @@ c.setSecretKey(secretKey)
 print c._apiKey
 print c._secretKey
 print c._curlOpts
-#ret = c.queryBindList(user_id)
+ret = c.queryBindList(user_id)
 
 push_type = 1
 optional = dict()
 optional[Channel.USER_ID] = user_id
-ret = c.pushMessage(push_type, message, message_key, optional)
+#ret = c.pushMessage(push_type, message, message_key, optional)
 print ret
