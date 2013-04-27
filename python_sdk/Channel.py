@@ -96,16 +96,21 @@ class Channel(object):
 	METHOD = 'method'
 	HOST = 'host'
 	PRODUCT = 'channel'
+#	DEFAULT_HOST = 'channel.api.duapp.com'
 	DEFAULT_HOST = '10.23.248.79:8050' #'channel.api.duapp.com'
 #	DEFAULT_HOST = 'localhost:1234' #'channel.api.duapp.com'
+
+	#证书相关常量
 	NAME = 'name'
 	DESCRIPTION = 'description'
 	CERT = 'cert'
 	RELEASE_CERT = 'release_cert'
 	DEV_CERT = 'dev_cert'
+
+	#推送类型
 	PUSH_TYPE = 'push_type'
 
-	#推送类型常量
+	#可选推送类型
 	PUSH_TO_USER = 1
 	PUSH_TO_TAG = 2
 	PUSH_TO_ALL = 3
@@ -142,7 +147,6 @@ class Channel(object):
 			raise ChannelExcepthion(
 				'invalid param -arr_curlopt is not an dict', 
 				Channel.CHANNEL_SDK_INIT_FAIL) 
-		self._resetErrorStatus()
 
 
 	def setApiKey(self, apiKey):
@@ -156,27 +160,46 @@ class Channel(object):
 	def getRequestId(self):
 		return self._requestId
 
+
+	# 服务器端根据userId, 查询绑定信息
+	# 用户关注：是
 	def queryBindList(self, userId, optional = None):
-		self._resetErrorStatus()
+		"""
+		服务器端根据userId, 查询绑定信息
+		参数：
+			str userId:  用户ID号
+			dict optional: 可选参数 
+		返回值：
+			成功:python字典； 失败：False
+		"""
 		try:
 			tmpArgs = [userId, optional]
 			arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)	
 			arrArgs[Channel.METHOD] = 'query_bindlist'
 			return self._commonProcess(arrArgs)
-		except Exception, e:
+		except ChannelException, e:
 			self._channelExceptionHandler(e)	
 			return False
 			
 
+	# 推送消息
+	# 用户关注：是
 	def pushMessage(self, push_type, messages, 
 			message_keys, optional = None):
-
-		self._resetErrorStatus()
+		"""
+		推送消息
+		参数:
+			push_type: 推送消息的类型
+			messages：消息内容
+			message_keys: 消息key
+			optional: 可选参数
+		返回值 成功：python字典; 失败：False
+		"""
 		try:
 			tmpArgs = [push_type, messages, message_keys, optional]
 			arrArgs = self._mergeArgs([Channel.PUSH_TYPE, Channel.MESSAGES,
 						 Channel.MSG_KEYS], tmpArgs)
-			arrArgs[Channel.METHOD] = 'pushxmsg'
+			arrArgs[Channel.METHOD] = 'push_msg'
 			if(push_type == Channel.PUSH_TO_USER):
 				if(not arrArgs.has_key(Channel.USER_ID) or 
 					arrArgs[Channel.USER_ID] is None):
@@ -197,17 +220,205 @@ class Channel(object):
 				arrArgs[Channel.MSG_KEYS] = json.dumps(arrArgs[Channel.MSG_KEYS])
 			return self._commonProcess(arrArgs)
 
-		except Exception, e:
+		except ChannelException, e:
 			self._channelExceptionHandler(e)
 			return False
 
 
-	###
-	# 内部函数
-	###
-	def _resetErrorStatus(self):
-		pass
+	#校验userId是否已经绑定
+	#用户关注：是
+	def verifyBind(self, userId, optional = None):
+		"""
+		校验userId是否已经绑定
+		参数：
+			userId:用户id
+			optional:可选参数
+		返回值：
+			成功：python数组；失败False
+		"""
+		try:
+			tmpArgs = [userId, optional]
+			arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)
+			arrArgs[Channel.METHOD] = 'verify_bind';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
 
+	
+	#根据userId查询消息
+	#用户关注：是
+	def fetchMessage(self, userId, optional = None):
+		"""
+		根据userId查询消息
+		参数：
+			userId:用户id
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [userId, optional]
+			arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)
+			arrArgs[Channel.METHOD] = 'fetch_msg';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+	#根据userId查询消息个数
+	#用户关注：是
+	def fetchMessage(self, userId, optional = None):
+		"""
+		根据userId查询消息个数
+		参数：
+			userId:用户id
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [userId, optional]
+			arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)
+			arrArgs[Channel.METHOD] = 'fetch_msgcount';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+	#根据userId, msgIds删除消息
+	#用户关注：是
+	def deleteMessage(self, userId, msgId, optional = None):
+		"""
+		根据userId, msgIds删除消息
+		参数：
+			userId:用户id
+			msgIds:消息id
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [userId, msgId, optional]
+			arrArgs = self._mergeArgs([Channel.USER_ID, Channel.MSG_IDS], tmpArgs)
+			arrArgs[Channel.METHOD] = 'delete_msg';
+			if(isinstance(arrArgs[Channel.MSG_IDS], list)):
+				arrArgs[Channel.MSG_IDS] = json.dumps(arrArgs[Channel.MSG_IDS])
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+
+
+	#设置消息标签
+	#用户关注：是
+	def setTag(self, tagName, optional = None):
+		"""
+		设置消息标签
+		参数：
+			tagName:标签
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [tagName, optional]
+			arrArgs = self._mergeArgs([Channel.TAG_NAME], tmpArgs)
+			arrArgs[Channel.METHOD] = 'set_tag';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+	#查询消息标签信息
+	#用户关注：是
+	def fetchTag(self, optional = None):
+		"""
+		查询消息标签信息
+		参数:
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [optional]
+			arrArgs = self._mergeArgs([], tmpArgs)
+			arrArgs[Channel.METHOD] = 'fetch_tag';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+	#删除消息标签
+	#用户关注：是
+	def deleteTag(self, tagName, optional = None):
+		"""
+		删除消息标签
+		参数：
+			tagName:标签
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [tagName, optional]
+			arrArgs = self._mergeArgs([Channel.TAG_NAME], tmpArgs)
+			arrArgs[Channel.METHOD] = 'delete_tag';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+
+	#查询用户相关的标签
+	#用户关注：是
+	def queryUserTag(self, userId, optional = None):
+		"""
+		查询用户相关的标签
+		参数：
+			userId:用户id
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [userId, optional]
+			arrArgs = self._mergeArgs([Channel.USER_ID], tmpArgs)
+			arrArgs[Channel.METHOD] = 'query_user_tags';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+	#根据channelId查询设备类型
+	#用户关注：是
+	def queryDeviceType(self, channelId, optional = None):
+		"""
+		根据channelId查询设备类型
+		参数：
+			ChannelId:用户Channel的ID号
+			optional:可选参数
+		返回值：
+			成功：python字典； 失败：False
+		"""
+		try:
+			tmpArgs = [channelId, optional]
+			arrArgs = self._mergeArgs([Channel.CHANNEL_ID], tmpArgs)
+			arrArgs[Channel.METHOD] = 'query_device_type';
+			return self._commonProcess(arrArgs)
+		except ChannelException, e:
+			self._channelExceptionHandler(e)
+			return False
+
+
+
+	#
+	# 内部函数
+	#
 
 	def _checkString(self, string, minLen, maxLen):
 		if( isinstance(string, str) and len(string) >= minLen 
@@ -314,11 +525,12 @@ class Channel(object):
 			raise ChannelException ('invalid sdk params, optional param must bean dict', Channel.CHANNEL_SDK_PARAM)
 
 		idx = 0
-		for key in arrNeed:
-			if(tmpArgs[idx] is None):
-				raise ChannelException ('lack param' + key, Channel.CHANNEL_SDK_PARAM)
-			arrArgs[key] = tmpArgs[idx]	
-			idx = idx + 1
+		if(isinstance(arrNeed, list)):
+			for key in arrNeed:
+				if(tmpArgs[idx] is None):
+					raise ChannelException ('lack param ' + key, Channel.CHANNEL_SDK_PARAM)
+				arrArgs[key] = tmpArgs[idx]	
+				idx = idx + 1
 
 		if(len(tmpArgs)  == idx + 1 and tmpArgs[idx] is not None):
 			for (key, value) in tmpArgs[idx].items():
