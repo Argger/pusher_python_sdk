@@ -58,8 +58,7 @@ def test_verifyBind():
 
 def test_fetchMessage():
 	c = Channel(apiKey, secretKey)
-	msg_id = "111"
-	ret = c.fetchMessage(user_id, msg_id)
+	ret = c.fetchMessage(user_id)
 	print ret	
 
 def test_deleteMessage():
@@ -97,14 +96,14 @@ def test_queryDeviceType():
 	ret = c.queryDeviceType(channel_id)
 	print ret
 
-
+"""
 if(__name__ == '__main__'):
 	test_pushMessage_to_user()
 	time.sleep(1)
-	#test_pushMessage_to_tag()
-	#time.sleep(1)
-	#test_pushMessage_to_all()
-	#time.sleep(1)
+	test_pushMessage_to_tag()
+	time.sleep(1)
+	test_pushMessage_to_all()
+	time.sleep(1)
 	test_queryBindList()
 	time.sleep(1)
 	test_verifyBind()
@@ -123,3 +122,4 @@ if(__name__ == '__main__'):
 	time.sleep(1)
 	test_queryDeviceType()
 	time.sleep(1)
+"""

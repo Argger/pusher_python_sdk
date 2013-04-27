@@ -96,9 +96,8 @@ class Channel(object):
 	METHOD = 'method'
 	HOST = 'host'
 	PRODUCT = 'channel'
-#	DEFAULT_HOST = 'channel.api.duapp.com'
-	DEFAULT_HOST = '10.23.248.79:8050' #'channel.api.duapp.com'
-#	DEFAULT_HOST = 'localhost:1234' #'channel.api.duapp.com'
+	DEFAULT_HOST = 'channel.api.duapp.com'
+#	DEFAULT_HOST = '10.23.248.79:8050' #'channel.api.duapp.com'
 
 	#证书相关常量
 	NAME = 'name'
@@ -268,7 +267,7 @@ class Channel(object):
 
 	#根据userId查询消息个数
 	#用户关注：是
-	def fetchMessage(self, userId, optional = None):
+	def fetchMessageCount(self, userId, optional = None):
 		"""
 		根据userId查询消息个数
 		参数：
