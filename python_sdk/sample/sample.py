@@ -7,14 +7,15 @@ sys.path.append("..")
 from Channel import *
 
 #以下只是测试数据，请使用者自行修改为可用数据
-apiKey = 'GkWwrvZrCaMQfCZ190ujndZm'
-secretKey = 'I5nqT2szvC12Qdf1gHZ5RSpPnluVo4VI'
-user_id = '580118370301074982'
-channel_id = '3915728604212165383'
-message = ['helloworld', 'hellopush']
-message = json.dumps(message)
-message_key = ['key1', 'key2']
-message_key = json.dumps(message_key)
+apiKey = "76Yi0ZBGGV2HrAziIiYEFtRh"
+secretKey = "xxxxxxxxxxxxx"
+user_id = "1105115563847474869"
+channel_id = 3944730196422489622
+
+message = "{'title':'baidu push','description':'message from python sdk'}"
+#message = json.dumps(message)
+message_key = "key1"
+#message_key = json.dumps(message_key)
 tagname = "test_tag"
 
 def test_pushMessage_to_user():
@@ -22,6 +23,9 @@ def test_pushMessage_to_user():
 	push_type = 1
 	optional = dict()
 	optional[Channel.USER_ID] = user_id
+	optional[Channel.CHANNEL_ID] = channel_id
+	#推送通知类型
+	optional[Channel.MESSAGE_TYPE] = 1
 	ret = c.pushMessage(push_type, message, message_key, optional)
 	print ret
 
@@ -96,6 +100,7 @@ def test_queryDeviceType():
 	ret = c.queryDeviceType(channel_id)
 	print ret
 
+test_pushMessage_to_user()
 """
 if(__name__ == '__main__'):
 	test_pushMessage_to_user()

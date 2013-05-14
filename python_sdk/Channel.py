@@ -97,7 +97,7 @@ class Channel(object):
 	HOST = 'host'
 	PRODUCT = 'channel'
 	DEFAULT_HOST = 'channel.api.duapp.com'
-#	DEFAULT_HOST = '10.23.248.79:8050' #'channel.api.duapp.com'
+#	DEFAULT_HOST = 'localhost:1234' #'channel.api.duapp.com'
 
 	#证书相关常量
 	NAME = 'name'
@@ -142,6 +142,9 @@ class Channel(object):
 				'http status is error, and the body returned is not a json string',
 			Channel.CHANNEL_SDK_HTTP_STATUS_OK_BUT_RESULT_ERROR :
 				 'http status is ok, but the body returned is not a json string'}
+		self._method_channel_in_body = [
+			'push_msg', 'set_tag', 'fetch_tag', 
+			'delete_tag', 'query_user_tags']
 		if(not isinstance(self._curlOpts, dict)):
 			raise ChannelExcepthion(
 				'invalid param -arr_curlopt is not an dict', 
@@ -452,9 +455,9 @@ class Channel(object):
 	def _baseControl(self, opt):
 		resource = 'channel'
 		if( opt.has_key(Channel.CHANNEL_ID) ):
-			if(opt[Channel.CHANNEL_ID] is not None):
+			if(opt[Channel.CHANNEL_ID] is not None and opt[Channel.METHOD] not in self._method_channel_in_body):
 				resource = opt[Channel.CHANNEL_ID]
-			del opt[Channel.CHANNEL_ID]
+				del opt[Channel.CHANNEL_ID]
 		
 		host = opt[Channel.HOST]
 		del opt[Channel.HOST]
